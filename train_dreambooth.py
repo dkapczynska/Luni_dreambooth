@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "requests",
+# ]
+# ///
 """
 DreamBooth fine-tuning for your dog directly from AWS S3.
 Author : <you@example.com>
@@ -29,6 +35,10 @@ from dotenv import load_dotenv
 load_dotenv()  # this loads variables from .env into environment
 import os
 
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
+
 # ---------------------------------------------------------------------------
 # 1. S3 DOWNLOAD UTILITIES
 # ---------------------------------------------------------------------------
@@ -38,9 +48,21 @@ def download_images_from_s3(bucket: str, prefix: str, local_dir: Path) -> List[P
     Credentials are taken from the normal AWS search chain
     (env vars, ~/.aws/, IAM role, etc.).
     """
-    s3 = boto3.client("s3")
+    s3 = boto3.client(
+    's3',
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+    )
+
+    try:
+        # Attempt to list objects in the bucket (lightweight call, shows if access is OK)
+        s3.list_objects_v2(Bucket=BUCKET_NAME, MaxKeys=1)
+        print(f"Access to bucket {BUCKET_NAME} succeeded!")
+    except ClientError as e:
+        print(f"Access to bucket {BUCKET_NAME} failed: {e}")
+
     paginator = s3.get_paginator("list_objects_v2")
-    pages = paginator.paginate(Bucket=bucket, Prefix=prefix)
+    pages = paginator.paginate(Bucket=BUCKET_NAME, Prefix="")
 
     local_dir.mkdir(parents=True, exist_ok=True)
     image_paths = []
@@ -50,7 +72,7 @@ def download_images_from_s3(bucket: str, prefix: str, local_dir: Path) -> List[P
             if key.lower().endswith((".png", ".jpg", ".jpeg", ".bmp")):
                 file_name = Path(key).name
                 local_path = local_dir / file_name
-                s3.download_file(bucket, key, str(local_path))
+                s3.download_file(BUCKET_NAME, key, str(local_path))
                 image_paths.append(local_path)
     if not image_paths:
         raise RuntimeError("No images found in the specified S3 location.")
@@ -251,6 +273,7 @@ def main():
 
     tmpdir = Path(tempfile.mkdtemp(prefix="dog_images_"))
     print(f"⏬ Downloading images to {tmpdir}")
+
     local_paths = download_images_from_s3(args.s3_bucket, args.s3_prefix, tmpdir)
 
     # Pre-transform all to 512×512 PNG

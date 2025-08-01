@@ -1,0 +1,19 @@
+[project]
+name = "luni-dreambooth"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "accelerate>=1.9.0",
+    "bitsandbytes>=0.46.1",
+    "boto3>=1.40.0",
+    "diffusers>=0.34.0",
+    "numpy>=2.2.6",
+    "pillow>=11.3.0",
+    "python-dotenv>=1.1.1",
+    "torch>=2.7.1",
+    "torchvision>=0.22.1",
+    "tqdm>=4.67.1",
+    "transformers>=4.54.1",
+]

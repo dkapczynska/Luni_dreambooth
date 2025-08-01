@@ -58,4 +58,5 @@ tqdm>=4.66.0
 
 # Optional: faster JPEG decoding
 jpeg4py
+dotenv
 
